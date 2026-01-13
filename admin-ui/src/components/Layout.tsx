@@ -53,8 +53,6 @@ const Layout = () => {
     { name: 'Queue Monitor', path: '/queues', icon: RiRocketLine },
     { name: 'Providers', path: '/providers', icon: SettingsIcon },
     { name: 'Templates', path: '/templates', icon: EmailIcon },
-    { name: 'Headers', path: '/headers', icon: EmailIcon },
-    { name: 'Footers', path: '/footers', icon: EmailIcon },
     { name: 'Outbox', path: '/outbox', icon: ViewIcon },
   ];
 

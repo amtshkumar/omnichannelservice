@@ -9,8 +9,6 @@ import Analytics from './pages/Analytics';
 import QueueMonitoring from './pages/QueueMonitoring';
 import ProviderConfigs from './pages/ProviderConfigs';
 import Templates from './pages/Templates';
-import Headers from './pages/Headers';
-import Footers from './pages/Footers';
 import Outbox from './pages/Outbox';
 import ScheduledEmails from './pages/ScheduledEmails';
 
@@ -35,8 +33,6 @@ function App() {
             <Route path="queues" element={<QueueMonitoring />} />
             <Route path="providers" element={<ProviderConfigs />} />
             <Route path="templates" element={<Templates />} />
-            <Route path="headers" element={<Headers />} />
-            <Route path="footers" element={<Footers />} />
             <Route path="outbox" element={<Outbox />} />
             <Route path="scheduled" element={<ScheduledEmails />} />
           </Route>

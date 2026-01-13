@@ -194,6 +194,77 @@ const ProviderConfigs = () => {
     });
   };
 
+  const handleTestProvider = (provider: any) => {
+    setTestingProvider(provider);
+    setTestEmail('');
+    onTestOpen();
+  };
+
+  const sendTestNotification = async () => {
+    if (!testingProvider) return;
+
+    const isEmail = testingProvider.channel === 'EMAIL';
+    const recipient = isEmail ? testEmail : testEmail; // For SMS, this would be phone number
+
+    if (!recipient) {
+      toast({
+        title: 'Recipient required',
+        description: isEmail ? 'Please enter an email address' : 'Please enter a phone number',
+        status: 'warning',
+        duration: 3000,
+      });
+      return;
+    }
+
+    setTestLoading(true);
+    try {
+      const axios = (await import('axios')).default;
+      const token = localStorage.getItem('token');
+
+      const endpoint = isEmail 
+        ? '/api/v1/notifications/email'
+        : '/api/v1/notifications/sms';
+
+      const payload = isEmail
+        ? {
+            idempotencyKey: `test-${testingProvider.id}-${Date.now()}`,
+            to: [recipient],
+            subject: `Test Email from ${testingProvider.name || testingProvider.providerType}`,
+            body: `<h1>Test Email</h1><p>This is a test email sent from the <strong>${testingProvider.name || testingProvider.providerType}</strong> provider.</p><p>Provider ID: ${testingProvider.id}</p><p>Sent at: ${new Date().toLocaleString()}</p>`,
+          }
+        : {
+            idempotencyKey: `test-${testingProvider.id}-${Date.now()}`,
+            to: recipient,
+            message: `Test SMS from ${testingProvider.name || testingProvider.providerType}. Sent at ${new Date().toLocaleString()}`,
+          };
+
+      await axios.post(`http://localhost:3000${endpoint}`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      toast({
+        title: 'Test notification sent!',
+        description: `Check ${isEmail ? 'your email inbox' : 'your phone'} and Bull Board for the job status.`,
+        status: 'success',
+        duration: 5000,
+      });
+
+      onTestClose();
+    } catch (error: any) {
+      toast({
+        title: 'Failed to send test notification',
+        description: error.response?.data?.message || error.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+      });
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   return (
     <VStack spacing={8} align="stretch">
       <Flex justify="space-between" align="center" flexWrap="wrap" gap={4}>
@@ -641,12 +712,12 @@ const ProviderConfigs = () => {
         </ModalContent>
       </Modal>
 
-      {/* Test Email Modal */}
+      {/* Test Notification Modal */}
       <Modal isOpen={isTestOpen} onClose={onTestClose} size="md">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader bgGradient="linear(to-r, green.600, teal.400)" color="white" borderTopRadius="md">
-            🧪 Test Email Configuration
+            🧪 Test {testingProvider?.channel === 'EMAIL' ? 'Email' : 'SMS'} Provider
           </ModalHeader>
           <ModalCloseButton color="white" />
           <ModalBody pb={6} pt={6}>
@@ -654,23 +725,29 @@ const ProviderConfigs = () => {
               <Alert status="info" borderRadius="md">
                 <AlertIcon />
                 <Box>
-                  <AlertTitle fontSize="sm">Send Test Email</AlertTitle>
+                  <AlertTitle fontSize="sm">
+                    Send Real {testingProvider?.channel === 'EMAIL' ? 'Email' : 'SMS'}
+                  </AlertTitle>
                   <AlertDescription fontSize="xs">
-                    Testing: {testingProvider?.providerType} ({testingProvider?.environmentScope})
+                    Provider: {testingProvider?.name || testingProvider?.providerType} ({testingProvider?.environmentScope})
                   </AlertDescription>
                 </Box>
               </Alert>
 
               <FormControl isRequired>
-                <FormLabel fontWeight="semibold">Recipient Email</FormLabel>
+                <FormLabel fontWeight="semibold">
+                  {testingProvider?.channel === 'EMAIL' ? 'Recipient Email' : 'Recipient Phone Number'}
+                </FormLabel>
                 <Input
-                  type="email"
-                  placeholder="test@example.com"
+                  type={testingProvider?.channel === 'EMAIL' ? 'email' : 'tel'}
+                  placeholder={testingProvider?.channel === 'EMAIL' ? 'test@example.com' : '+1234567890'}
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
                 />
                 <Text fontSize="xs" color="gray.500" mt={1}>
-                  Enter the email address where you want to receive the test email
+                  {testingProvider?.channel === 'EMAIL' 
+                    ? 'Enter the email address where you want to receive the test email'
+                    : 'Enter the phone number (with country code) where you want to receive the test SMS'}
                 </Text>
               </FormControl>
 
@@ -681,53 +758,11 @@ const ProviderConfigs = () => {
                 <Button
                   colorScheme="green"
                   leftIcon={testLoading ? <Spinner size="sm" /> : <EmailIcon />}
-                  onClick={async () => {
-                    if (!testEmail) {
-                      toast({ title: 'Please enter an email address', status: 'warning', duration: 3000 });
-                      return;
-                    }
-                    setTestLoading(true);
-                    try {
-                      // Call test API endpoint (backend is on port 3000)
-                      const response = await fetch('http://localhost:3000/api/v1/notifications/email', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        },
-                        body: JSON.stringify({
-                          idempotencyKey: `test-${Date.now()}`,
-                          to: [testEmail],
-                          subject: 'Test Email from Notification Service',
-                          body: '<h1>Test Email</h1><p>This is a test email from your notification service. If you received this, your configuration is working correctly!</p>',
-                        }),
-                      });
-                      
-                      if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                      }
-                      toast({
-                        title: 'Test email sent!',
-                        description: `Check ${testEmail} for the test message`,
-                        status: 'success',
-                        duration: 5000,
-                      });
-                      onTestClose();
-                      setTestEmail('');
-                    } catch (error: any) {
-                      toast({
-                        title: 'Test failed',
-                        description: error.message || 'Failed to send test email',
-                        status: 'error',
-                        duration: 5000,
-                      });
-                    } finally {
-                      setTestLoading(false);
-                    }
-                  }}
+                  onClick={sendTestNotification}
                   isLoading={testLoading}
+                  loadingText="Sending..."
                 >
-                  Send Test Email
+                  Send Test {testingProvider?.channel === 'EMAIL' ? 'Email' : 'SMS'}
                 </Button>
               </HStack>
             </VStack>

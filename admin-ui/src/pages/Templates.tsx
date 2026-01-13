@@ -29,12 +29,16 @@ import {
   FormLabel,
   Input,
   useDisclosure,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
 } from '@chakra-ui/react';
 import { AddIcon, EditIcon, DeleteIcon, ViewIcon } from '@chakra-ui/icons';
 import { templateAPI } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 import { TOAST_DURATION } from '../constants/notifications';
-import { StatusBadge } from '../components/StatusBadge';
 
 const Templates = () => {
   const [templates, setTemplates] = useState([]);
@@ -50,6 +54,10 @@ const Templates = () => {
     body: '',
     isActive: true,
   });
+
+  // Header and Footer content
+  const [headerContent, setHeaderContent] = useState('<div style="background:#4F46E5;padding:20px;text-align:center;color:white;"><h1>{{companyName}}</h1></div>');
+  const [footerContent, setFooterContent] = useState('<div style="background:#f3f4f6;padding:20px;text-align:center;color:#6b7280;font-size:12px;"><p>© 2024 {{companyName}}. All rights reserved.</p></div>');
 
   useEffect(() => {
     loadTemplates();
@@ -133,15 +141,27 @@ const Templates = () => {
 
   return (
     <VStack spacing={8} align="stretch">
-      <Flex justify="space-between" align="center" flexWrap="wrap" gap={4}>
-        <Box>
-          <Heading size="2xl" mb={2} bgGradient="linear(to-r, brand.600, purple.400)" bgClip="text">
-            Notification Templates
-          </Heading>
-          <Text color="gray.500" fontSize="lg">
-            Manage email and SMS templates with dynamic placeholders
-          </Text>
-        </Box>
+      <Box>
+        <Heading size="2xl" mb={2} bgGradient="linear(to-r, brand.600, purple.400)" bgClip="text">
+          Templates & Design
+        </Heading>
+        <Text color="gray.500" fontSize="lg">
+          Manage templates, headers, and footers for your notifications
+        </Text>
+      </Box>
+
+      <Tabs colorScheme="brand" variant="enclosed" size="lg">
+        <TabList>
+          <Tab fontWeight="semibold">📧 Templates</Tab>
+          <Tab fontWeight="semibold">📄 Headers</Tab>
+          <Tab fontWeight="semibold">🔖 Footers</Tab>
+        </TabList>
+
+        <TabPanels>
+          {/* TEMPLATES TAB */}
+          <TabPanel>
+            <VStack spacing={6} align="stretch">
+              <Flex justify="space-between" align="center" flexWrap="wrap" gap={4}>
         <HStack spacing={3}>
           <Select
             placeholder="All Channels"
@@ -300,6 +320,120 @@ const Templates = () => {
           </ModalBody>
         </ModalContent>
       </Modal>
+            </VStack>
+          </TabPanel>
+
+          {/* HEADER DESIGNER TAB */}
+          <TabPanel>
+            <Card shadow="lg" borderRadius="xl">
+              <CardBody>
+                <VStack spacing={6} align="stretch">
+                  <Box>
+                    <Heading size="lg" mb={2}>Email Header Design</Heading>
+                    <Text color="gray.500">
+                      Design a single header that will be used across all email templates
+                    </Text>
+                  </Box>
+
+                  <FormControl>
+                    <FormLabel fontWeight="semibold">Header HTML Content</FormLabel>
+                    <RichTextEditor
+                      value={headerContent}
+                      onChange={setHeaderContent}
+                      height="300px"
+                    />
+                    <Text fontSize="xs" color="gray.500" mt={2}>
+                      Use placeholders like {'{{companyName}}'}, {'{{logoUrl}}'}, etc.
+                    </Text>
+                  </FormControl>
+
+                  <Box p={4} borderWidth="1px" borderRadius="md" bg="gray.50">
+                    <Text fontWeight="semibold" mb={2}>Preview:</Text>
+                    <Box
+                      dangerouslySetInnerHTML={{ __html: headerContent }}
+                      borderWidth="1px"
+                      borderRadius="md"
+                      bg="white"
+                    />
+                  </Box>
+
+                  <HStack justify="flex-end">
+                    <Button
+                      colorScheme="brand"
+                      size="lg"
+                      onClick={() => {
+                        // Save header logic here
+                        toast({
+                          title: 'Header saved successfully',
+                          status: 'success',
+                          duration: TOAST_DURATION.MEDIUM,
+                        });
+                      }}
+                    >
+                      Save Header
+                    </Button>
+                  </HStack>
+                </VStack>
+              </CardBody>
+            </Card>
+          </TabPanel>
+
+          {/* FOOTER DESIGNER TAB */}
+          <TabPanel>
+            <Card shadow="lg" borderRadius="xl">
+              <CardBody>
+                <VStack spacing={6} align="stretch">
+                  <Box>
+                    <Heading size="lg" mb={2}>Email Footer Design</Heading>
+                    <Text color="gray.500">
+                      Design a single footer that will be used across all email templates
+                    </Text>
+                  </Box>
+
+                  <FormControl>
+                    <FormLabel fontWeight="semibold">Footer HTML Content</FormLabel>
+                    <RichTextEditor
+                      value={footerContent}
+                      onChange={setFooterContent}
+                      height="300px"
+                    />
+                    <Text fontSize="xs" color="gray.500" mt={2}>
+                      Use placeholders like {'{{companyName}}'}, {'{{address}}'}, {'{{unsubscribeUrl}}'}, etc.
+                    </Text>
+                  </FormControl>
+
+                  <Box p={4} borderWidth="1px" borderRadius="md" bg="gray.50">
+                    <Text fontWeight="semibold" mb={2}>Preview:</Text>
+                    <Box
+                      dangerouslySetInnerHTML={{ __html: footerContent }}
+                      borderWidth="1px"
+                      borderRadius="md"
+                      bg="white"
+                    />
+                  </Box>
+
+                  <HStack justify="flex-end">
+                    <Button
+                      colorScheme="brand"
+                      size="lg"
+                      onClick={() => {
+                        // Save footer logic here
+                        toast({
+                          title: 'Footer saved successfully',
+                          status: 'success',
+                          duration: TOAST_DURATION.MEDIUM,
+                        });
+                      }}
+                    >
+                      Save Footer
+                    </Button>
+                  </HStack>
+                </VStack>
+              </CardBody>
+            </Card>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </VStack>
   );
 };

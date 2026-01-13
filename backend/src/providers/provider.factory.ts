@@ -21,12 +21,8 @@ export class ProviderFactory {
   ) {}
 
   getEmailProvider(providerType: ProviderType, credentials?: any, metadata?: any): EmailProvider {
-    // In non-production, always use mock
-    const appEnv = this.configService.get('APP_ENV');
-    if (appEnv !== 'production') {
-      return this.mockEmailProvider;
-    }
-
+    // Use real provider if configured, regardless of environment
+    // Only use MOCK if explicitly requested
     switch (providerType) {
       case ProviderType.SMTP:
         if (!credentials || !metadata) {
@@ -43,12 +39,8 @@ export class ProviderFactory {
   }
 
   getSmsProvider(providerType: ProviderType): SmsProvider {
-    // In non-production, always use mock
-    const appEnv = this.configService.get('APP_ENV');
-    if (appEnv !== 'production') {
-      return this.mockSmsProvider;
-    }
-
+    // Use real provider if configured, regardless of environment
+    // Only use MOCK if explicitly requested
     switch (providerType) {
       case ProviderType.TWILIO:
         return this.twilioProvider;
