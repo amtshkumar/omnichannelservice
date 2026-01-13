@@ -39,13 +39,30 @@ import { AddIcon, EditIcon, DeleteIcon, ViewIcon } from '@chakra-ui/icons';
 import { templateAPI } from '../services/api';
 import RichTextEditor from '../components/RichTextEditor';
 import { TOAST_DURATION } from '../constants/notifications';
+import { TableSkeleton } from '../components/TableSkeleton';
+import { Pagination } from '../components/Pagination';
+import { EmptyState } from '../components/EmptyState';
+import { PageCard } from '../components/PageCard';
+import { usePagination } from '../hooks/usePagination';
 
 const Templates = () => {
   const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [channel, setChannel] = useState('');
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
+
+  // Pagination
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    totalItems,
+    handlePageChange,
+    handleItemsPerPageChange,
+  } = usePagination(templates, 10);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -64,11 +81,14 @@ const Templates = () => {
   }, [channel]);
 
   const loadTemplates = async () => {
+    setLoading(true);
     try {
       const response = await templateAPI.getAll(channel);
       setTemplates(response.data);
     } catch (error) {
       toast({ title: 'Failed to load templates', status: 'error', duration: TOAST_DURATION.MEDIUM });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -188,20 +208,35 @@ const Templates = () => {
         </HStack>
       </Flex>
 
-      <Card shadow="xl" borderRadius="xl" overflow="hidden">
-        <CardBody p={0}>
-          <Table variant="simple">
-            <Thead bg="gray.50">
-              <Tr>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Name</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Channel</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Subject</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Status</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Actions</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {templates.map((template: any) => (
+      <PageCard>
+        <Box overflowX="auto">
+          {loading ? (
+            <TableSkeleton 
+              rows={5} 
+              columns={5} 
+              headers={['Name', 'Channel', 'Subject', 'Status', 'Actions']} 
+            />
+          ) : templates.length === 0 ? (
+            <EmptyState
+              title="No templates found"
+              description="Get started by creating your first notification template. Templates help you maintain consistent messaging across all notifications."
+              actionLabel="Create Template"
+              onAction={handleAddNew}
+            />
+          ) : (
+            <>
+              <Table variant="simple">
+                <Thead bg="gray.50">
+                  <Tr>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Name</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Channel</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Subject</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Status</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Actions</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {paginatedData.map((template: any) => (
                 <Tr key={template.id} _hover={{ bg: 'gray.50' }} transition="all 0.2s">
                   <Td fontWeight="semibold" fontSize="md">{template.name}</Td>
                   <Td>
@@ -247,11 +282,22 @@ const Templates = () => {
                     </HStack>
                   </Td>
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </CardBody>
-      </Card>
+                  ))}
+                </Tbody>
+              </Table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </>
+          )}
+        </Box>
+      </PageCard>
 
       {/* Add/Edit Template Modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl">

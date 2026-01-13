@@ -32,24 +32,44 @@ import { outboxAPI } from '../services/api';
 import { TOAST_DURATION } from '../constants/notifications';
 import { StatusBadge } from '../components/StatusBadge';
 import { format } from 'date-fns';
+import { TableSkeleton } from '../components/TableSkeleton';
+import { Pagination } from '../components/Pagination';
+import { EmptyState } from '../components/EmptyState';
+import { PageCard } from '../components/PageCard';
+import { usePagination } from '../hooks/usePagination';
 
 const Outbox = () => {
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const [filters, setFilters] = useState({ channel: '', status: '' });
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
+
+  // Pagination
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    totalItems,
+    handlePageChange,
+    handleItemsPerPageChange,
+  } = usePagination(notifications, 25);
 
   useEffect(() => {
     loadNotifications();
   }, [filters]);
 
   const loadNotifications = async () => {
+    setLoading(true);
     try {
       const response = await outboxAPI.getAll(filters);
       setNotifications(response.data);
     } catch (error) {
       toast({ title: 'Failed to load notifications', status: 'error', duration: TOAST_DURATION.MEDIUM });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,21 +132,34 @@ const Outbox = () => {
         </HStack>
       </Flex>
 
-      <Card shadow="xl" borderRadius="xl" overflow="hidden">
-        <CardBody p={0}>
-          <Table variant="simple">
-            <Thead bg="gray.50">
-              <Tr>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">ID</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Channel</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Recipients</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Status</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Created</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Actions</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {notifications.map((notification: any) => (
+      <PageCard>
+        <Box overflowX="auto">
+          {loading ? (
+            <TableSkeleton 
+              rows={10} 
+              columns={6} 
+              headers={['ID', 'Channel', 'Recipients', 'Status', 'Created', 'Actions']} 
+            />
+          ) : notifications.length === 0 ? (
+            <EmptyState
+              title="No notifications sent yet"
+              description="Your sent notifications will appear here. Start sending notifications from the Playground to see them listed."
+            />
+          ) : (
+            <>
+              <Table variant="simple">
+                <Thead bg="gray.50">
+                  <Tr>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">ID</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Channel</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Recipients</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Status</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Created</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Actions</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {paginatedData.map((notification: any) => (
                 <Tr key={notification.id} _hover={{ bg: 'gray.50' }} transition="all 0.2s">
                   <Td fontWeight="semibold" color="brand.600">#{notification.id}</Td>
                   <Td>
@@ -160,11 +193,22 @@ const Outbox = () => {
                     />
                   </Td>
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </CardBody>
-      </Card>
+                  ))}
+                </Tbody>
+              </Table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </>
+          )}
+        </Box>
+      </PageCard>
 
       <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />

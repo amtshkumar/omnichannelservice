@@ -46,6 +46,11 @@ import {
 } from '@chakra-ui/react';
 import { AddIcon, EditIcon, DeleteIcon, EmailIcon } from '@chakra-ui/icons';
 import { providerAPI } from '../services/api';
+import { TableSkeleton } from '../components/TableSkeleton';
+import { Pagination } from '../components/Pagination';
+import { EmptyState } from '../components/EmptyState';
+import { PageCard } from '../components/PageCard';
+import { usePagination } from '../hooks/usePagination';
 
 const ProviderConfigs = () => {
   const [providers, setProviders] = useState([]);
@@ -57,6 +62,17 @@ const ProviderConfigs = () => {
   const [testEmail, setTestEmail] = useState('');
   const [testLoading, setTestLoading] = useState(false);
   const toast = useToast();
+
+  // Pagination
+  const {
+    paginatedData,
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    totalItems,
+    handlePageChange,
+    handleItemsPerPageChange,
+  } = usePagination(providers, 10);
 
   const [formData, setFormData] = useState({
     channel: 'EMAIL',
@@ -292,21 +308,39 @@ const ProviderConfigs = () => {
         </Button>
       </Flex>
 
-      <Card shadow="xl" borderRadius="xl" overflow="hidden">
-        <CardBody p={0}>
-          <Table variant="simple">
-            <Thead bg="gray.50">
-              <Tr>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Name</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Channel</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Provider</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Environment</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Status</Th>
-                <Th fontSize="sm" textTransform="none" fontWeight="semibold">Actions</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {providers.map((provider: any) => (
+      <PageCard>
+        <Box overflowX="auto">
+          {loading ? (
+            <TableSkeleton 
+              rows={5} 
+              columns={6} 
+              headers={['Name', 'Channel', 'Provider', 'Environment', 'Status', 'Actions']} 
+            />
+          ) : providers.length === 0 ? (
+            <EmptyState
+              title="No providers configured"
+              description="Configure your first email or SMS provider to start sending notifications. Providers handle the actual delivery of your messages."
+              actionLabel="Add Provider"
+              onAction={() => {
+                resetForm();
+                onOpen();
+              }}
+            />
+          ) : (
+            <>
+              <Table variant="simple">
+                <Thead bg="gray.50">
+                  <Tr>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Name</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Channel</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Provider</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Environment</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Status</Th>
+                    <Th fontSize="sm" textTransform="none" fontWeight="semibold">Actions</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {paginatedData.map((provider: any) => (
                 <Tr key={provider.id} _hover={{ bg: 'gray.50' }} transition="all 0.2s">
                   <Td>
                     <Text fontWeight="semibold" fontSize="md">
@@ -366,11 +400,22 @@ const ProviderConfigs = () => {
                     </HStack>
                   </Td>
                 </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </CardBody>
-      </Card>
+                  ))}
+                </Tbody>
+              </Table>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </>
+          )}
+        </Box>
+      </PageCard>
 
       {/* Add/Edit Provider Modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="2xl">
