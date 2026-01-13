@@ -38,6 +38,7 @@ import RichTextEditor from '../components/RichTextEditor';
 import { TIMEZONES } from '../constants/timezones';
 import { TOAST_DURATION } from '../constants/notifications';
 import { generateIdempotencyKey } from '../utils/scheduledEmailHelpers';
+import { ApiDocumentation } from '../components/ApiDocumentation';
 
 interface BulkRecipient {
   id: string;
@@ -1179,68 +1180,7 @@ const Playground = () => {
 
           {/* API EXAMPLES TAB */}
           <TabPanel>
-            <Card shadow="lg" borderRadius="xl">
-              <CardBody>
-                <Heading size="md" mb={4}>API Examples</Heading>
-                <VStack spacing={4} align="stretch">
-                  <Box>
-                    <Text fontWeight="semibold" mb={2}>Send Email (cURL)</Text>
-                    <Code display="block" p={4} borderRadius="md" whiteSpace="pre" fontSize="sm">
-{`curl -X POST http://localhost:3000/api/v1/notifications/email \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer YOUR_TOKEN" \\
-  -d '{
-    "idempotencyKey": "unique-key-123",
-    "to": ["user@example.com"],
-    "subject": "Test Email",
-    "body": "Hello {{firstName}}!",
-    "placeholders": {"firstName": "John"}
-  }'`}
-                    </Code>
-                  </Box>
-
-                  <Box>
-                    <Text fontWeight="semibold" mb={2}>Send SMS (cURL)</Text>
-                    <Code display="block" p={4} borderRadius="md" whiteSpace="pre" fontSize="sm">
-{`curl -X POST http://localhost:3000/api/v1/notifications/sms \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer YOUR_TOKEN" \\
-  -d '{
-    "idempotencyKey": "unique-key-456",
-    "to": "+1234567890",
-    "message": "Your code is {{code}}",
-    "placeholders": {"code": "123456"}
-  }'`}
-                    </Code>
-                  </Box>
-
-                  <Box>
-                    <Text fontWeight="semibold" mb={2}>Send Bulk Email (cURL)</Text>
-                    <Code display="block" p={4} borderRadius="md" whiteSpace="pre" fontSize="sm">
-{`curl -X POST http://localhost:3000/api/v1/notifications/bulk/email \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer YOUR_TOKEN" \\
-  -d '{
-    "notifications": [
-      {
-        "idempotencyKey": "bulk-1",
-        "to": ["user1@example.com"],
-        "templateId": 1,
-        "placeholders": {"name": "John"}
-      },
-      {
-        "idempotencyKey": "bulk-2",
-        "to": ["user2@example.com"],
-        "templateId": 1,
-        "placeholders": {"name": "Jane"}
-      }
-    ]
-  }'`}
-                    </Code>
-                  </Box>
-                </VStack>
-              </CardBody>
-            </Card>
+            <ApiDocumentation />
           </TabPanel>
         </TabPanels>
       </Tabs>
