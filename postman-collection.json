@@ -1,0 +1,304 @@
+{
+  "info": {
+    "name": "Notification Service API",
+    "description": "Complete API collection for Notification Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('token', jsonData.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@notification.local\",\n  \"password\": \"Admin@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Send Email (Template)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotencyKey\": \"email-{{$timestamp}}\",\n  \"templateId\": 1,\n  \"to\": [\"user@example.com\"],\n  \"placeholders\": {\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"companyName\": \"Acme Corp\",\n    \"loginUrl\": \"https://example.com/login\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/notifications/email",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "notifications", "email"]
+            }
+          }
+        },
+        {
+          "name": "Send Email (Raw)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotencyKey\": \"email-raw-{{$timestamp}}\",\n  \"to\": [\"user@example.com\"],\n  \"subject\": \"Welcome {{name}}!\",\n  \"body\": \"<h1>Hello {{name}}</h1><p>Welcome to our service!</p>\",\n  \"placeholders\": {\n    \"name\": \"Jane Doe\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/notifications/email",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "notifications", "email"]
+            }
+          }
+        },
+        {
+          "name": "Send SMS (Template)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotencyKey\": \"sms-{{$timestamp}}\",\n  \"templateId\": 2,\n  \"to\": \"+1234567890\",\n  \"placeholders\": {\n    \"serviceName\": \"MyApp\",\n    \"otp\": \"123456\",\n    \"validityMinutes\": \"10\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/notifications/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "notifications", "sms"]
+            }
+          }
+        },
+        {
+          "name": "Send SMS (Raw)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotencyKey\": \"sms-raw-{{$timestamp}}\",\n  \"to\": \"+1234567890\",\n  \"message\": \"Your verification code is {{code}}\",\n  \"placeholders\": {\n    \"code\": \"987654\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/v1/notifications/sms",
+              "host": ["{{baseUrl}}"],
+              "path": ["v1", "notifications", "sms"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Provider Configs",
+      "item": [
+        {
+          "name": "Get All Providers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/provider-configs",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "provider-configs"]
+            }
+          }
+        },
+        {
+          "name": "Create Provider Config",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"EMAIL\",\n  \"providerType\": \"SENDGRID\",\n  \"credentials\": {\n    \"apiKey\": \"SG.your-api-key\"\n  },\n  \"metadata\": {\n    \"fromEmail\": \"noreply@example.com\",\n    \"fromName\": \"My Service\",\n    \"replyTo\": \"support@example.com\"\n  },\n  \"isActive\": true,\n  \"environmentScope\": \"production\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/provider-configs",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "provider-configs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Templates",
+      "item": [
+        {
+          "name": "Get All Templates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "templates"]
+            }
+          }
+        },
+        {
+          "name": "Create Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"EMAIL\",\n  \"name\": \"Order Confirmation\",\n  \"subject\": \"Order {{orderId}} Confirmed\",\n  \"bodyHtml\": \"<h2>Thank you {{customerName}}!</h2><p>Your order {{orderId}} has been confirmed.</p>\",\n  \"headerId\": 1,\n  \"footerId\": 1,\n  \"placeholders\": [\"customerName\", \"orderId\"],\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/templates",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "templates"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Outbox",
+      "item": [
+        {
+          "name": "Get All Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/outbox",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "outbox"]
+            }
+          }
+        },
+        {
+          "name": "Get Notification by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/outbox/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "outbox", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
