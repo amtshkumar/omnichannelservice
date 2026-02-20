@@ -98,3 +98,31 @@ export const notificationAPI = {
   updateScheduled: (id: number, data: any) => api.patch(`/v1/notifications/schedule/${id}`, data),
   deleteScheduled: (id: number) => api.delete(`/v1/notifications/schedule/${id}`),
 };
+
+// Backup & Restore API
+export const backupAPI = {
+  exportBackup: () => api.get('/admin/backup/export', { responseType: 'blob' }),
+  importBackup: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/admin/backup/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  importBackupJson: (data: any) => api.post('/admin/backup/import/json', data),
+  validateBackup: (data: any) => api.get('/admin/backup/validate', { data }),
+};
+
+// Template Import/Export API
+export const templateImportExportAPI = {
+  exportAll: () => api.get('/admin/templates/export/all', { responseType: 'blob' }),
+  exportOne: (id: number) => api.get(`/admin/templates/export/${id}`, { responseType: 'blob' }),
+  import: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/admin/templates/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  importJson: (data: any) => api.post('/admin/templates/import/json', data),
+};

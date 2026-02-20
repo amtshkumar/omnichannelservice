@@ -48,59 +48,24 @@ notification-service/
 
 - Docker & Docker Compose
 - Node.js 18+ (for local development)
-- MySQL 8.0+ (if running without Docker)
 
-### Quick Start with Docker
+### Quick Start (One Command)
 
-1. **Clone and navigate to the project**
-   ```bash
-   cd notification
-   ```
+```bash
+./setup.sh
+```
 
-2. **Copy environment files**
-   ```bash
-   cp .env.example .env.development
-   ```
+That's it! The script will:
+- Create environment files
+- Build and start all services
+- Run migrations and seed data
+- Install dependencies
 
-3. **Configure environment variables**
-   Edit `.env.development` with your settings:
-   ```env
-   APP_ENV=development
-   DB_HOST=mysql
-   DB_PORT=3306
-   DB_USERNAME=notification_user
-   DB_PASSWORD=notification_pass
-   DB_DATABASE=notification_db
-   JWT_SECRET=your-super-secret-jwt-key-change-in-production
-   
-   # SendGrid (optional for dev)
-   SENDGRID_API_KEY=
-   
-   # Twilio (optional for dev)
-   TWILIO_ACCOUNT_SID=
-   TWILIO_AUTH_TOKEN=
-   ```
+### Access the Services
 
-4. **Start all services**
-   ```bash
-   docker-compose up -d
-   ```
-
-5. **Run database migrations**
-   ```bash
-   docker-compose exec api npm run migration:run
-   ```
-
-6. **Seed initial data**
-   ```bash
-   docker-compose exec api npm run seed
-   ```
-
-7. **Access the services**
-   - API: http://localhost:3000
-   - Swagger Docs: http://localhost:3000/docs
-   - Admin UI: http://localhost:5173
-   - MySQL: localhost:3306
+- **API**: http://localhost:3000
+- **Swagger Docs**: http://localhost:3000/docs
+- **Admin UI**: http://localhost:5173
 
 ### Default Admin Credentials
 
@@ -108,6 +73,16 @@ notification-service/
 Email: admin@notification.local
 Password: Admin@123
 ```
+
+### Daily Usage
+
+```bash
+./start.sh   # Start services
+./stop.sh    # Stop services
+./cleanup.sh # Full cleanup (removes data)
+```
+
+See [SCRIPTS.md](SCRIPTS.md) for detailed script documentation.
 
 ## 📡 API Usage
 

@@ -109,4 +109,84 @@ export class TemplatesService {
 
     return { body };
   }
+
+  async exportTemplates(tenantId?: number): Promise<any> {
+    const templates = await this.findAll(tenantId);
+    
+    return {
+      exportDate: new Date().toISOString(),
+      version: '1.0',
+      tenantId,
+      templates: templates.map(t => this.sanitizeTemplateForExport(t)),
+    };
+  }
+
+  /**
+   * Export a single template
+   */
+  async exportTemplate(id: number, tenantId?: number): Promise<any> {
+    const template = await this.findOne(id, tenantId);
+    
+    return {
+      exportDate: new Date().toISOString(),
+      version: '1.0',
+      tenantId,
+      template: this.sanitizeTemplateForExport(template),
+    };
+  }
+
+  /**
+   * Import templates from JSON
+   */
+  async importTemplates(data: any, tenantId?: number): Promise<any> {
+    const imported = [];
+    const errors = [];
+    
+    // Handle both single template and array of templates
+    const templates = Array.isArray(data) 
+      ? data 
+      : data.templates || [data.template];
+
+    for (const templateData of templates) {
+      try {
+        // Remove ID and timestamps to create new records
+        const { id, createdAt, updatedAt, header, footer, ...cleanData } = templateData;
+        
+        const template = this.templateRepository.create({
+          ...cleanData,
+          tenantId,
+        });
+
+        const saved = await this.templateRepository.save(template);
+        imported.push(saved);
+      } catch (error) {
+        errors.push({
+          template: templateData.name,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      success: true,
+      imported: imported.length,
+      failed: errors.length,
+      templates: imported,
+      errors: errors.length > 0 ? errors : undefined,
+    };
+  }
+
+  /**
+   * Sanitize template for export (remove sensitive/unnecessary fields)
+   */
+  private sanitizeTemplateForExport(template: NotificationTemplate): any {
+    const { id, createdAt, updatedAt, tenant, header, footer, ...exportData } = template as any;
+    
+    return {
+      ...exportData,
+      // Include header/footer content if present
+      headerContent: header?.content,
+      footerContent: footer?.content,
+    };
+  }
 }

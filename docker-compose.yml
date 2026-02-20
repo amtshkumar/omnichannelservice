@@ -1,10 +1,7 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
     container_name: notification-mysql
-    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root_password
       MYSQL_DATABASE: notification_db
@@ -15,12 +12,25 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - notification-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: notification-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   api:
     build:
@@ -28,7 +38,6 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: notification-api
-    restart: unless-stopped
     env_file:
       - .env.development
     ports:
@@ -39,8 +48,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    networks:
-      - notification-network
+      redis:
+        condition: service_healthy
     command: npm run start:dev
 
   admin-ui:
@@ -49,7 +58,6 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: notification-admin-ui
-    restart: unless-stopped
     environment:
       - VITE_API_URL=http://localhost:3000
     ports:
@@ -59,31 +67,12 @@ services:
       - /app/node_modules
     depends_on:
       - api
-    networks:
-      - notification-network
     command: npm run dev -- --host
-
-  redis:
-    container_name: notification-redis
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    command: redis-server --appendonly yes
-    networks:
-      - notification-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
 
 volumes:
   mysql_data:
-    driver: local
-  redis-data:
+  redis_data:
 
 networks:
-  notification-network:
-    driver: bridge
+  default:
+    name: notification-network

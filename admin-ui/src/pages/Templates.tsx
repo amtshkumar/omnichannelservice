@@ -159,6 +159,148 @@ const Templates = () => {
     onOpen();
   };
 
+  const handleExportAll = async () => {
+    try {
+      const response = await templateAPI.getAll(channel);
+      const templates = response.data;
+      
+      // Create export data
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        version: '1.0',
+        templates: templates,
+      };
+      
+      // Convert to JSON and download
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `templates-export-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({ 
+        title: 'Templates exported successfully', 
+        description: `Exported ${templates.length} template(s)`,
+        status: 'success', 
+        duration: TOAST_DURATION.MEDIUM 
+      });
+    } catch (error) {
+      toast({ 
+        title: 'Failed to export templates', 
+        status: 'error', 
+        duration: TOAST_DURATION.MEDIUM 
+      });
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/admin/templates/export/all', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `templates-export-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({ 
+        title: 'Templates exported successfully', 
+        status: 'success', 
+        duration: TOAST_DURATION.MEDIUM 
+      });
+    } catch (error) {
+      toast({ 
+        title: 'Failed to export templates', 
+        status: 'error', 
+        duration: TOAST_DURATION.MEDIUM 
+      });
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/admin/templates/import', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        const hasErrors = result.failed > 0;
+        
+        if (hasErrors) {
+          // Show detailed error information
+          const errorDetails = result.errors.map((e: any) => 
+            `${e.template}: ${e.error}`
+          ).join('\n');
+          
+          toast({ 
+            title: `Import completed with issues`, 
+            description: `✅ Imported: ${result.imported}\n❌ Failed: ${result.failed}\n\nErrors:\n${errorDetails}`,
+            status: 'warning', 
+            duration: TOAST_DURATION.LONG,
+            isClosable: true,
+          });
+        } else {
+          toast({ 
+            title: `Successfully imported ${result.imported} template(s)`, 
+            description: 'All templates imported without errors',
+            status: 'success', 
+            duration: TOAST_DURATION.MEDIUM 
+          });
+        }
+        loadTemplates();
+      } else {
+        toast({ 
+          title: 'Import failed', 
+          description: result.message || 'An error occurred during import',
+          status: 'error', 
+          duration: TOAST_DURATION.LONG,
+          isClosable: true,
+        });
+      }
+    } catch (error: any) {
+      toast({ 
+        title: 'Failed to import templates', 
+        description: error.message || 'An unexpected error occurred',
+        status: 'error', 
+        duration: TOAST_DURATION.LONG,
+        isClosable: true,
+      });
+    }
+
+    // Reset file input
+    event.target.value = '';
+  };
+
   return (
     <VStack spacing={8} align="stretch">
       <Box>
@@ -194,17 +336,66 @@ const Templates = () => {
             <option value="EMAIL">Email</option>
             <option value="SMS">SMS</option>
           </Select>
-          <Button 
-            leftIcon={<AddIcon />} 
-            colorScheme="brand" 
-            size="lg"
-            shadow="md"
-            _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
-            transition="all 0.2s"
-            onClick={handleAddNew}
-          >
-            Add Template
-          </Button>
+          <HStack spacing={3}>
+            <Button 
+              leftIcon={<ViewIcon />} 
+              colorScheme="purple" 
+              size="lg"
+              variant="outline"
+              onClick={handleExportAll}
+            >
+              Export All
+            </Button>
+            <Button 
+              leftIcon={<AddIcon />} 
+              colorScheme="cyan" 
+              size="lg"
+              variant="outline"
+              onClick={() => {
+                const a = document.createElement('a');
+                a.href = '/sample-templates.json';
+                a.download = 'sample-templates.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                toast({ 
+                  title: 'Sample file downloaded', 
+                  description: 'Use this as a reference for importing templates',
+                  status: 'info', 
+                  duration: TOAST_DURATION.MEDIUM 
+                });
+              }}
+            >
+              Download Sample
+            </Button>
+            <Button 
+              leftIcon={<AddIcon />} 
+              colorScheme="green" 
+              size="lg"
+              variant="outline"
+              onClick={() => document.getElementById('import-file')?.click()}
+            >
+              Import
+            </Button>
+            <input
+              id="import-file"
+              type="file"
+              accept=".json"
+              style={{ display: 'none' }}
+              onChange={handleImport}
+            />
+            <Button 
+              leftIcon={<AddIcon />} 
+              colorScheme="brand" 
+              size="lg"
+              shadow="md"
+              _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
+              transition="all 0.2s"
+              onClick={handleAddNew}
+            >
+              Add Template
+            </Button>
+          </HStack>
         </HStack>
       </Flex>
 
